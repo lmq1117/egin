@@ -1,42 +1,60 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"html/template"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	r := gin.Default()
-
-	r.SetFuncMap(template.FuncMap{
-		"hSize": humanSize,
-		"hAge":  humanAge,
-	})
-	r.LoadHTMLGlob("./views/**/*")
-
-	r.GET("/users/user", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "users/user.html", gin.H{
-			"age": "1",
+	t, err := loadTemplate()
+	if err != nil {
+		panic(err)
+	}
+	//r.SetFuncMap(template.FuncMap{
+	//	"hSize": humanSize,
+	//	"hAge":  humanAge,
+	//})
+	r.SetHTMLTemplate(t)
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "/html/index.tmpl", gin.H{
+			"Foo": "World",
 		})
 	})
-
-	r.GET("/goods/good", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "goods/good.html", gin.H{
-			"good": "2",
+	r.GET("/bar", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "/html/bar.tmpl", gin.H{
+			"Bar": "World",
 		})
 	})
-	r.Run("localhost:9091")
+	r.Run(":9091")
+}
 
-	//var size, age string
-	//for i := 0; i < 100; i++ {
-	//	size += humanSize("")
-	//	age += humanAge("")
-	//}
-	//fmt.Println(age, size)
-
+func loadTemplate() (*template.Template, error) {
+	t := template.New("")
+	for name, file := range Assets.Files {
+		if file.IsDir() || !strings.HasSuffix(name, ".tmpl") {
+			continue
+		}
+		h, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		//t, err = t.New(name).Parse(string(h))
+		t = template.Must(t.New(name).Funcs(template.FuncMap{
+			"hSize": humanSize,
+			"hAge":  humanAge,
+		}).Parse(string(h)))
+		//if err != nil {
+		//	return nil, err
+		//}
+	}
+	return t, nil
 }
 
 func humanSize(s string) string {
