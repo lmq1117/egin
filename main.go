@@ -34,7 +34,7 @@ func handleConn(c net.Conn) {
 	//死循环会一直执行，直到写入失败
 	//最可能的原因是客户端主动断开连接
 	for {
-		_, err := io.WriteString(c, "现在是北京时间："+time.Now().Format("15:04:05\n"))
+		_, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
 		if err != nil {
 			return
 		}
