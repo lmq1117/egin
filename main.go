@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+
 	r := gin.Default()
 
 	//r.SetFuncMap(template.FuncMap{
@@ -57,10 +58,12 @@ func loadTemplate() (*template.Template, error) {
 			return nil, err
 		}
 		//t, err = t.New(name).Parse(string(h))
-		t = template.Must(t.New(name).Funcs(template.FuncMap{
-			"hSize": humanSize,
-			"hAge":  humanAge,
-		}).Parse(string(h)))
+		t = template.Must(t.New(name).
+			Funcs(template.FuncMap{
+				"hSize": humanSize,
+				"hAge":  humanAge,
+			}).
+			Parse(string(h)))
 		//if err != nil {
 		//	return nil, err
 		//}
