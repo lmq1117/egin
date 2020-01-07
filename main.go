@@ -1,45 +1,43 @@
 package main
 
 import (
-	"fmt"
+	"io"
+	"log"
+	"net"
 	"time"
 )
 
+//$ go build gopl.io/ch8/clock1
+//$ ./clock1 &
+//$ nc localhost 8000
 func main() {
-	go spinner(100 * time.Millisecond)
-	const n = 45
-	fibN := fibC(n)
-	fmt.Printf("\rFibonacci(%d) = %d\n", n, fibN)
-	//fibC(45)
-}
+	//net.Listen 对象 监听来自8001端口的连接
+	listener, err := net.Listen("tcp", "localhost:8001")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-func spinner(delay time.Duration) {
 	for {
-		for _, r := range `\|/` {
-			fmt.Printf("\r%c", r)
-			time.Sleep(delay)
+		//listener.Accept方法会直接阻塞，直到新的连接被创建 返回 net.Conn对象来表示这个连接
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatal(err)
+			continue
 		}
+		//处理一个完整的客户端连接
+		handleConn(conn)
 	}
 }
 
-func fib(x int) int {
-	if x < 2 {
-		return x
-	} else {
-		return fib(x-1) + fib(x-2)
-	}
-}
-
-func fibC(x int) int {
-	var f []int
-	for i := 0; i < x; i++ {
-		if i < 2 {
-			f = append(f, i+1)
-		} else {
-			f = append(f, f[i-1]+f[i-2])
+func handleConn(c net.Conn) {
+	defer c.Close()
+	//死循环会一直执行，直到写入失败
+	//最可能的原因是客户端主动断开连接
+	for {
+		_, err := io.WriteString(c, "现在是北京时间："+time.Now().Format("15:04:05\n"))
+		if err != nil {
+			return
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(1 * time.Second)
 	}
-	//fmt.Println(f)
-	return f[x-2]
 }
